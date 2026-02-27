@@ -37,8 +37,6 @@ export const ThumbnailGenerateModal = ({
     },
   });
 
-  const utils = trpc.useUtils();
-
   const generateThumbnail = trpc.videos.generateThumbnail.useMutation({
     onSuccess: () => {
       toast.success("Thumbnail generated", {
@@ -90,7 +88,9 @@ export const ThumbnailGenerateModal = ({
             )}
           />
           <div className="flex justify-end">
-            <Button type="submit">Generate</Button>
+            <Button disabled={generateThumbnail.isPending} type="submit">
+              Generate
+            </Button>
           </div>
         </form>
       </Form>

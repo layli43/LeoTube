@@ -113,6 +113,11 @@ export const videosRouter = createTRPCRouter({
         throw new TRPCError({ code: "NOT_FOUND" });
       }
 
+      // Remove thumbnail and preview
+      const utapi = new UTApi();
+      const thumbnailKey = removedVideo.thumbnailKey || "";
+      const previewKey = removedVideo.previewKey || "";
+      utapi.deleteFiles([thumbnailKey, previewKey]);
       return removedVideo;
     }),
 

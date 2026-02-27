@@ -19,6 +19,7 @@ export const { POST } = serve(async (context) => {
   const { userId, videoId, prompt } = input;
   const utapi = new UTApi();
 
+  //1. Get the original video
   const video = await context.run("get-video", async () => {
     const existingVideo = await db
       .select()
@@ -32,7 +33,7 @@ export const { POST } = serve(async (context) => {
     return existingVideo[0];
   });
 
-  // Ai generated thumbnail
+  // 2. Ai generated thumbnail and upload it to uploadthing
   const { thumbnailKey, thumbnailUrl } = await context.run(
     "generate-upload-thumbnail",
     async () => {
@@ -81,13 +82,14 @@ export const { POST } = serve(async (context) => {
     },
   );
 
-  // Clear previous thumbnail
+  // 3. Clear previous thumbnail on uploadthing
   await context.run("cleanup-thumbnail", async () => {
     if (video.thumbnailKey) {
       await utapi.deleteFiles(video.thumbnailKey);
     }
   });
 
+  //4. Update the database
   await context.run("update-video", async () => {
     await db
       .update(videos)

@@ -1,7 +1,6 @@
 import { db } from "@/db";
 import { videos } from "@/db/schema";
 import { mux } from "@/lib/mux";
-import { ThumbnailUploadModal } from "@/modules/studio/ui/components/thumbnail-upload-modal";
 import {
   VideoAssetCreatedWebhookEvent,
   VideoAssetDeletedWebhookEvent,
@@ -9,7 +8,7 @@ import {
   VideoAssetReadyWebhookEvent,
   VideoAssetTrackReadyWebhookEvent,
 } from "@mux/mux-node/resources/webhooks.mjs";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { headers } from "next/headers";
 import { UTApi } from "uploadthing/server";
 
@@ -80,6 +79,25 @@ export const POST = async (request: Request) => {
 
       if (!playbackId) {
         return new Response("Missing playback ID", { status: 400 });
+      }
+
+      // Check if the existing Video has uploading key already to prevent idempotent problem
+      const [existingVideo] = await db
+        .select()
+        .from(videos)
+        .where(
+          and(
+            eq(videos.muxAssetId, data.id),
+            eq(videos.muxStatus, data.status),
+          ),
+        );
+
+      if (
+        existingVideo &&
+        existingVideo.thumbnailKey &&
+        existingVideo.thumbnailUrl
+      ) {
+        return;
       }
 
       const tempThumbnailUrl = `https://image.mux.com/${playbackId}/thumbnail.jpg`;
