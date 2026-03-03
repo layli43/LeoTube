@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { users, videos, videoUpdateSchema } from "@/db/schema";
+import { users, videos, videoUpdateSchema, videoViews } from "@/db/schema";
 import { mux } from "@/lib/mux";
 import { workflow } from "@/lib/workflow";
 import {
@@ -15,13 +15,15 @@ import { z } from "zod";
 export const videosRouter = createTRPCRouter({
   getOne: baseProcedure
     .input(z.object({ id: z.string().uuid() }))
-    .query(async ({ ctx, input }) => {
+    .query(async ({ input }) => {
       const [existingVideo] = await db
         .select({
           ...getTableColumns(videos),
           user: {
             ...getTableColumns(users),
           },
+          // Drizzle sub-query
+          viewCounts: db.$count(videoViews, eq(videoViews.videoId, videos.id)),
         })
         .from(videos)
         .innerJoin(users, eq(videos.userId, users.id))
