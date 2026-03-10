@@ -1,5 +1,6 @@
 "use client";
 
+import { DEFAULT_LIMIT } from "@/constants";
 import { CommentForm } from "@/modules/comments/ui/components/comment-form";
 import { CommentItem } from "@/modules/comments/ui/components/comment-item";
 import { trpc } from "@/trpc/client";
@@ -21,7 +22,15 @@ export const CommentsSection = ({ videoId }: CommentsSectionProps) => {
 };
 
 export const CommentsSectionSuspense = ({ videoId }: CommentsSectionProps) => {
-  const [comments] = trpc.comments.getMany.useSuspenseQuery({ videoId });
+  const [comments] = trpc.comments.getMany.useSuspenseInfiniteQuery(
+    {
+      videoId,
+      limit: DEFAULT_LIMIT,
+    },
+    {
+      getNextPageParam: (lastPage) => lastPage.nextCursor,
+    },
+  );
 
   return (
     <div>
@@ -30,9 +39,11 @@ export const CommentsSectionSuspense = ({ videoId }: CommentsSectionProps) => {
         <CommentForm videoId={videoId} />
       </div>
       <div className="flex flex-col gap-4 mt-2">
-        {comments.map((comment) => (
-          <CommentItem key={comment.id} comment={comment} />
-        ))}
+        {comments.pages
+          .flatMap((page) => page.items)
+          .map((comment) => (
+            <CommentItem key={comment.id} comment={comment} />
+          ))}
       </div>
     </div>
   );
