@@ -216,6 +216,8 @@ export const videosRouter = createTRPCRouter({
       const thumbnailKey = removedVideo.thumbnailKey || "";
       const previewKey = removedVideo.previewKey || "";
       utapi.deleteFiles([thumbnailKey, previewKey]);
+
+      // TODO: Rmove mux assets
       return removedVideo;
     }),
 
@@ -243,6 +245,7 @@ export const videosRouter = createTRPCRouter({
         throw new TRPCError({ code: "NOT_FOUND" });
       }
     }),
+
   create: protectedProcedure.mutation(async ({ ctx }) => {
     const { id: userId } = ctx.user;
 
