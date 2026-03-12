@@ -102,6 +102,7 @@ export const videosRouter = createTRPCRouter({
 
       return existingVideo;
     }),
+
   generateDescription: protectedProcedure
     .input(z.object({ id: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {
@@ -116,6 +117,7 @@ export const videosRouter = createTRPCRouter({
 
       return workflowRunId;
     }),
+
   generateTitle: protectedProcedure
     .input(z.object({ id: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {
@@ -130,6 +132,7 @@ export const videosRouter = createTRPCRouter({
 
       return workflowRunId;
     }),
+
   generateThumbnail: protectedProcedure
     .input(z.object({ id: z.string().uuid(), prompt: z.string().min(10) }))
     .mutation(async ({ ctx, input }) => {
@@ -144,6 +147,7 @@ export const videosRouter = createTRPCRouter({
 
       return workflowRunId;
     }),
+
   restoreThumbnail: protectedProcedure
     .input(z.object({ id: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {
@@ -193,6 +197,7 @@ export const videosRouter = createTRPCRouter({
 
       return updatedVideo;
     }),
+
   remove: protectedProcedure
     .input(z.object({ id: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {
