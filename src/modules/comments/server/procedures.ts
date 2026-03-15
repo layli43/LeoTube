@@ -5,6 +5,7 @@ import {
   createTRPCRouter,
   protectedProcedure,
 } from "@/trpc/init";
+import { TRPCError } from "@trpc/server";
 import {
   eq,
   getTableColumns,
@@ -14,6 +15,8 @@ import {
   count,
   desc,
   inArray,
+  isNull,
+  isNotNull,
 } from "drizzle-orm";
 import { z } from "zod";
 
@@ -22,17 +25,30 @@ export const commentsRouter = createTRPCRouter({
     .input(
       z.object({
         videoId: z.string().uuid(),
+        parentId: z.string().uuid().nullish(),
         value: z.string(),
       }),
     )
     .mutation(async ({ input, ctx }) => {
-      const { videoId } = input;
-      const { value } = input;
+      const { videoId, parentId, value } = input;
       const { id: userId } = ctx.user;
+
+      const [existingComment] = await db
+        .select()
+        .from(comments)
+        .where(inArray(comments.id, parentId ? [parentId] : []));
+
+      if (!existingComment && parentId) {
+        throw new TRPCError({ code: "NOT_FOUND" });
+      }
+
+      if (existingComment?.parentId && parentId) {
+        throw new TRPCError({ code: "BAD_REQUEST" });
+      }
 
       const createdComment = await db
         .insert(comments)
-        .values({ userId, videoId, value })
+        .values({ userId, videoId, parentId, value })
         .returning();
 
       return createdComment;
@@ -60,6 +76,7 @@ export const commentsRouter = createTRPCRouter({
     .input(
       z.object({
         videoId: z.string().uuid(),
+        parentId: z.string().uuid().nullish(),
         cursor: z
           .object({
             id: z.string().uuid(),
@@ -70,7 +87,7 @@ export const commentsRouter = createTRPCRouter({
       }),
     )
     .query(async ({ input, ctx }) => {
-      const { videoId } = input;
+      const { videoId, parentId } = input;
       const { cursor, limit } = input;
       const { clerkUserId } = ctx;
 
@@ -83,7 +100,7 @@ export const commentsRouter = createTRPCRouter({
       if (user) {
         userId = user.id;
       }
-      // TODO: Get viewer's reactions
+
       const commentsViewerReactions = db.$with("comments_viewer_reactions").as(
         db
           .select({
@@ -94,6 +111,17 @@ export const commentsRouter = createTRPCRouter({
           .where(inArray(commentsReactions.userId, userId ? [userId] : [])),
       );
 
+      const replies = db.$with("replies").as(
+        db
+          .select({
+            parentId: comments.parentId,
+            count: count(comments.id).as("count"),
+          })
+          .from(comments)
+          .where(isNotNull(comments.parentId))
+          .groupBy(comments.parentId),
+      );
+
       const [totalData, commentsList] = await Promise.all([
         // Get total comments counts
         await db
@@ -101,14 +129,15 @@ export const commentsRouter = createTRPCRouter({
             count: count(),
           })
           .from(comments)
-          .where(eq(comments.videoId, videoId)),
+          .where(and(eq(comments.videoId, videoId), isNull(comments.parentId))),
 
         await db
-          .with(commentsViewerReactions)
+          .with(commentsViewerReactions, replies)
           .select({
             ...getTableColumns(comments),
             user: users,
             viewerReaction: commentsViewerReactions.type,
+            replyCount: replies.count,
             likeCount: db.$count(
               commentsReactions,
               and(
@@ -128,6 +157,8 @@ export const commentsRouter = createTRPCRouter({
           .where(
             and(
               eq(comments.videoId, videoId),
+              parentId ? eq(comments.parentId, parentId)
+              :isNull(comments.parentId),
               cursor
                 ? or(
                     lt(comments.updatedAt, cursor.updatedAt),
@@ -144,6 +175,7 @@ export const commentsRouter = createTRPCRouter({
             commentsViewerReactions,
             eq(comments.id, commentsViewerReactions.commentId),
           )
+          .leftJoin(replies, eq(comments.id, replies.parentId))
           // Keep ordering consistent with lt-based cursor pagination to avoid duplicates.
           .orderBy(desc(comments.updatedAt), desc(comments.id))
           .limit(limit + 1),
