@@ -217,7 +217,10 @@ export const videosRouter = createTRPCRouter({
       const previewKey = removedVideo.previewKey || "";
       utapi.deleteFiles([thumbnailKey, previewKey]);
 
-      // TODO: Rmove mux assets
+      if (!removedVideo.muxAssetId) {
+        throw new TRPCError({ code: "NOT_FOUND" });
+      }
+      mux.video.assets.delete(removedVideo.muxAssetId, {});
       return removedVideo;
     }),
 
@@ -295,7 +298,6 @@ export const videosRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const { id } = input;
       const { id: userId } = ctx.user;
-
       const [existingVideo] = await db
         .select()
         .from(videos)

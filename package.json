@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:debug": "bun --inspect run dev",
     "dev:all": "concurrently \"bun run dev:webhook\" \"bun run dev\" ",
     "dev:webhook": "ngrok http --url=doloris-weakish-brittaney.ngrok-free.dev 3000",
     "build": "next build",

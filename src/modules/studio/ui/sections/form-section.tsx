@@ -137,6 +137,7 @@ export const FormSectionSuspense = ({ videoId }: FormSectionProps) => {
   const [thumbnailGenerateModalOpen, setThumbnailGenerateModalOpen] =
     useState(false);
 
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [categories] = trpc.categories.getMany.useSuspenseQuery();
   const utils = trpc.useUtils();
 
@@ -169,7 +170,7 @@ export const FormSectionSuspense = ({ videoId }: FormSectionProps) => {
     onSuccess: () => {
       utils.studio.getMany.invalidate();
       utils.studio.getOne.invalidate();
-      toast.success("Video removed");
+      toast.success("Video revalidated");
       router.push("/studio");
     },
     onError: () => {
@@ -258,21 +259,25 @@ export const FormSectionSuspense = ({ videoId }: FormSectionProps) => {
                     <MoreVerticalIcon />
                   </Button>
                 </DropdownMenuTrigger>
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem
-                        onSelect={() => revalidate.mutate({ id: videoId })}
-                      >
-                        <RotateCcwIcon className="size-4 mr-2" />
-                        Revalidate
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                        <TrashIcon className="size-4 mr-2" />
-                        Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </AlertDialogTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem
+                    onSelect={() => revalidate.mutate({ id: videoId })}
+                  >
+                    <RotateCcwIcon className="size-4 mr-2" />
+                    Revalidate
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onSelect={(e) => {
+                      e.preventDefault();
+                      setDeleteDialogOpen(true);
+                    }}
+                  >
+                    <TrashIcon className="size-4 mr-2" />
+                    Delete
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+                <AlertDialog open={deleteDialogOpen}>
+                  <AlertDialogTrigger asChild></AlertDialogTrigger>
                   <AlertDialogContent>
                     <AlertDialogHeader>
                       <AlertDialogTitle>Are you sure?</AlertDialogTitle>
@@ -284,12 +289,16 @@ export const FormSectionSuspense = ({ videoId }: FormSectionProps) => {
                     <AlertDialogFooter>
                       <AlertDialogCancel
                         className={buttonVariants({ variant: "default" })}
+                        onClick={() => setDeleteDialogOpen(false)}
                       >
                         Cancel
                       </AlertDialogCancel>
                       <AlertDialogAction
                         className={buttonVariants({ variant: "destructive" })}
-                        onClick={() => remove.mutate({ id: video.id })}
+                        onClick={() => {
+                          remove.mutate({ id: video.id });
+                          setDeleteDialogOpen(false);
+                        }}
                       >
                         Confirm
                       </AlertDialogAction>
