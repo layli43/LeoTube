@@ -70,7 +70,7 @@ export const PlaylistCreateModal = ({
             name="name"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Prompt</FormLabel>
+                <FormLabel>Title</FormLabel>
                 <FormControl>
                   <Input
                     {...field}

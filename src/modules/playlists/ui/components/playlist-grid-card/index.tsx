@@ -2,7 +2,10 @@ import Link from "next/link";
 
 import { PlaylistGetManyOutput } from "@/modules/playlists/type";
 import { THUMBNAIL_FALLBACK } from "@/modules/videos/constants";
-import { PlaylistThumbnail, PlaylistThumbnailSkeleton } from "./playlist-thumbnail";
+import {
+  PlaylistThumbnail,
+  PlaylistThumbnailSkeleton,
+} from "./playlist-thumbnail";
 import { PlaylistInfo, PlaylistInfoSkeleton } from "./playlist-info";
 
 interface PlaylistGridCardProps {
@@ -23,7 +26,7 @@ export const PlaylistGridCard = ({ data }: PlaylistGridCardProps) => {
     <Link href={`/playlists/${data.id}`}>
       <div className="flex flex-col gap-2 w-full group">
         <PlaylistThumbnail
-          imageUrl={THUMBNAIL_FALLBACK}
+          imageUrl={data.thumbnailUrl || THUMBNAIL_FALLBACK}
           title={data.name}
           videoCount={data.videoCount}
         />
