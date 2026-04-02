@@ -4,21 +4,28 @@ import { Button } from "@/components/ui/button";
 import { Edit2Icon } from "lucide-react";
 import { useAuth } from "@clerk/nextjs";
 import { Skeleton } from "@/components/ui/skeleton";
+import { BannersUploadModal } from "./banners-upload-modal";
+import { useState } from "react";
 
 interface UserPageBannerProps {
   user: UserGetOneOutput;
 }
 
 export const UserPageBannerSkeleton = () => {
-  return <Skeleton className="w-full max-h-[200px] h-[15vh] md:h-[25vh]" />
+  return <Skeleton className="w-full max-h-[200px] h-[15vh] md:h-[25vh]" />;
 };
 
 export const UserPageBanner = ({ user }: UserPageBannerProps) => {
   const { userId } = useAuth();
-
+  const [isBannersUploadModalOpen, setisBannersUploadModalOpen] =
+    useState(false);
   return (
     <div className="relative group">
-      {/* TODO: Add upload banner modal */}
+      <BannersUploadModal
+        userId={user.id}
+        open={isBannersUploadModalOpen}
+        onOpenChange={setisBannersUploadModalOpen}
+      />
       <div
         className={cn(
           `w-full max-h-[200px] h-[15vh] md:h-[25vh] bg-gradient-to-r from-gray-100 to-gray-200
@@ -33,6 +40,7 @@ export const UserPageBanner = ({ user }: UserPageBannerProps) => {
       >
         {user.clerkId === userId && (
           <Button
+            onClick={() => setisBannersUploadModalOpen(true)}
             type="button"
             size="icon"
             className="absolute top-4 right-4 rounded-full bg-black/50 hover:bg-black/50
