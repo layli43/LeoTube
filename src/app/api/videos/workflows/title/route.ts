@@ -71,31 +71,6 @@ export const { POST } = serve(async (context) => {
     });
   }
 
-  // Openai api mocking code
-  // const { status, body } = await context.api.openai.call(
-  //   "generated-thumbnail",
-  //   {
-  //     token: process.env.GEMINI_API_KEY!,
-  //     operation: "chat.completions.create",
-  //     body: {
-  //       model: "gpt-4o",
-  //       messages: [
-  //         {
-  //           role: "user",
-  //           content: transcrpt,
-  //         },
-  //         {
-  //           role: "user",
-  //           content: TITLE_SYSTEM_PROMPT,
-  //         },
-  //       ],
-  //     },
-  //   },
-  // );
-
-  // // get text:
-  // const title = body.choices[0]?.message.content;
-
   await context.run("update-video", async () => {
     await db
       .update(videos)
